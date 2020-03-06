@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>openHAB Login</title>
+    <link rel="stylesheet" href="mdl/material.min.css">
+    <link rel="stylesheet" href="static/css/login.css">
+    <script src="mdl/material.min.js"></script>
+    <script src="jquery/jquery-3.4.1.min.js"></script>
+    <script src="scripts/authentication.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+</head>
+<body>
+<div class="mdl-layout mdl-js-layout mdl-layout--fixed-header">
+
+    <header class="mdl-layout__header">
+        <div class="mdl-layout__header-row">
+            <span class="mdl-layout-title">openHAB</span>
+            <div class="mdl-layout-spacer"></div>
+            <nav class="mdl-navigation mdl-layout--large-screen-only">
+                <a class="mdl-navigation__link" href=""><i class="material-icons">account_circle</i>&nbsp;Login</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="mdl-layout__content">
+    <div class="mdl-grid">
+
+        <div class="mdl-layout-spacer"></div>
+        <div class="mdl-cell mdl-cell--4-col mdl-cell--middle">
+            
+            
+                <form action="#">
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="text" id="user" pattern="[A-Z,a-z, ]*">
+                        <label class="mdl-textfield__label" for="user">User name</label>
+                        <span class="mdl-textfield__error">Letters and spaces only</span>
+                    </div>
+                    
+                    <div class="mdl-textfield mdl-js-textfield">
+                        <input class="mdl-textfield__input" type="password" id="password">
+                        <label class="mdl-textfield__label" for="password">Password</label>
+                    </div>
+                </form>
+                <div class="mdl-cell button">
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+                    Login
+                </button>
+                <button class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect mdl-button--colored">
+                    Register
+                </button>
+            </div>
+                   
+        </div>
+        <div class="mdl-layout-spacer"></div>
+    </div>
+    </main>
+    <footer class="mdl-mini-footer">
+        <div class="mdl-mini-footer__left-section">
+          <div class="mdl-logo">openHAB</div>
+          <ul class="mdl-mini-footer__link-list">
+            <li><a href="#">Help</a></li>
+            <li><a href="#">Privacy & Terms</a></li>
+          </ul>
+        </div>
+      </footer>
+</div>
+</body>
+</html>

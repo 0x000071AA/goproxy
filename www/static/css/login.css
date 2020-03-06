@@ -1,0 +1,10 @@
+.button {
+    margin-left: 0px;
+    margin-right: 0px;
+    text-align: center; 
+    width: 100%;
+  }
+
+  .mdl-grid {
+      height: 100%;
+  }
