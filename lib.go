@@ -11,6 +11,13 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
+// CertBotConfigDirectory system env
+const CertBotConfigDirectory = "CERTBOT_CONFIG_DIR"
+
+// ProxyConfigDirectory system env
+const ProxyConfigDirectory = "PROXY_CONFIG_DIR"
+
+// JwtAuthenticationKeys xx
 type JwtAuthenticationKeys struct {
 	privateKey *rsa.PrivateKey
 	publicKey  *rsa.PublicKey

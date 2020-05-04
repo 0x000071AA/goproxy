@@ -14,6 +14,10 @@ type ReverseProxy struct {
 	Directors       []func(req *http.Request)
 }
 
+func serveFiles() http.Handler {
+	return http.FileServer(http.Dir("./www"))
+}
+
 // NewMultiHostReverseProxy xx
 func NewMultiHostReverseProxy(targets ...*url.URL) (reverseProxy *ReverseProxy) {
 	reverseProxy = &ReverseProxy{currentDirector: 0}
