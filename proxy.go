@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"log"
@@ -8,6 +9,7 @@ import (
 	"net/url"
 	"os"
 
+	"github.com/gorilla/mux"
 	"gopkg.in/yaml.v3"
 )
 
@@ -55,6 +57,19 @@ func main() {
 	if err := os.Setenv(CertBotConfigDirectory, *certbotConfPtr); err != nil {
 		log.Panic("could not set [certbot_config]")
 	}
+
+	r := mux.NewRouter()
+
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Content-Type", "application/json")
+			next.ServeHTTP(w, r)
+		})
+	})
+
+	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		json.NewEncoder(w).Encode("{ health : true }")
+	})
 
 	config := getProxyConfig()
 
