@@ -2,18 +2,64 @@ package main
 
 import (
 	"encoding/json"
-	"html/template"
+	"flag"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/gorilla/mux"
+	"gopkg.in/yaml.v3"
 )
+
+type TargetHostConfig struct {
+	Targets []string `yaml:"targets"`
+}
+
+func getProxyConfig() TargetHostConfig {
+	basedir, exists := os.LookupEnv(ProxyConfigDirectory)
+	if !exists {
+		log.Panic("no config directory")
+	}
+	yamlFile, err := ioutil.ReadFile(basedir)
+	if err != nil {
+		log.Panic("can not read config file: " + err.Error())
+	}
+
+	var config TargetHostConfig
+
+	errUnmarshal := yaml.Unmarshal(yamlFile, &config)
+	if errUnmarshal != nil {
+		log.Panic("no valid yaml: " + errUnmarshal.Error())
+	}
+
+	return config
+}
 
 func main() {
 	var targets []*url.URL
 
+	// http://127.0.0.1:8080
+
+	proxyConfPtr := flag.String("proxy_config", "nil", "Base directory for proxy config file")
+	certbotConfPtr := flag.String("certbot_config", "nil", "Base directory for certbot config file")
+
+	flag.Parse()
+
+	if *proxyConfPtr == "nil" && *certbotConfPtr == "nil" {
+		flag.Usage()
+	}
+
+	if err := os.Setenv(ProxyConfigDirectory, *proxyConfPtr); err != nil {
+		log.Panic("could not set [proxy_conf]")
+	}
+	if err := os.Setenv(CertBotConfigDirectory, *certbotConfPtr); err != nil {
+		log.Panic("could not set [certbot_config]")
+	}
+
 	r := mux.NewRouter()
+
 	r.Use(func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json")
@@ -21,27 +67,13 @@ func main() {
 		})
 	})
 
-	r.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == "GET" {
-			t, _ := template.ParseFiles("www/authentication.gohtml")
-			t.Execute(w, nil)
-		} else {
-			r.ParseForm()
-			//r.Form["user"]
-			//r.Form["password"]
-		}
-	})
-
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode("{ health : true }")
 	})
 
-	r.HandleFunc("/users", GetUser).Methods("GET")
-	r.HandleFunc("/users/{user}", CreateUser).Methods("POST")
-	r.HandleFunc("/users/{user}", UpdateUser).Methods("PUT")
-	r.HandleFunc("/users/{user}", DeleteUser).Methods("DELETE")
+	config := getProxyConfig()
 
-	for _, host := range []string{"http://127.0.0.1:8080"} {
+	for _, host := range config.Targets {
 		rpURL, err := url.Parse(host)
 		if err != nil {
 			log.Fatalf("Error parsing url %v", err)
