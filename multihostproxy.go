@@ -61,5 +61,6 @@ func (p *ReverseProxy) NextDirector() func(*http.Request) {
 // ServeHTTP xx
 func (p *ReverseProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 	p.Director = p.NextDirector()
+	req.Header.Set("X-Forwarded-For", req.URL.Hostname())
 	p.ReverseProxy.ServeHTTP(rw, req)
 }

@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"gopkg.in/robfig/cron.v3"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 // CertBotConfig xx

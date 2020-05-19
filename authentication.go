@@ -11,14 +11,9 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-type UserInfo struct {
-	UserName string
-}
-
 type JwtAuthClaims struct {
 	*jwt.StandardClaims
 	CsrfToken string
-	UserInfo
 }
 
 var jwtExpiresAt = time.Now().Add(time.Hour * 5).Unix()
@@ -47,7 +42,6 @@ func JwtRSATokenHandler(username string, privateKey *rsa.PrivateKey) (string, er
 			ExpiresAt: jwtExpiresAt,
 		},
 		csrfToken,
-		UserInfo{username},
 	}
 	return token.SignedString(privateKey)
 }
@@ -102,22 +96,41 @@ func JwtHAMACValidationHandler(tokenString string) (jwt.MapClaims, error) {
 	return nil, errors.New("Invalid token")
 }
 
-type AuthenticationMiddleware struct {
-	tokenUsers map[string]string
-}
+// AuthenticationMiddleware xx
+func AuthenticationMiddleware(config TargetHostConfig) func(next http.Handler) http.Handler {
+	passthrough := config.Passthrough
+	allowedPaths := config.AllowedPaths
+	paths := config.Paths
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if passthrough {
+				next.ServeHTTP(w, r)
+				return
+			}
+			url := r.URL.RequestURI()
+			if PathContains(allowedPaths, url) {
+				next.ServeHTTP(w, r)
+				return
+			} else if !PathContains(paths, url) {
+				FailRequest(w, r, "Forbidden", http.StatusForbidden)
+				return
+			}
 
-func (middleware *AuthenticationMiddleware) Populate() {
-	middleware.tokenUsers["token"] = "user"
-}
+			token := r.Header.Get("X-Session-Token")
+			if token == "" {
+				FailRequest(w, r, "Forbidden", http.StatusForbidden)
+				return
+			}
 
-func (middleware *AuthenticationMiddleware) Middleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		token := r.Header.Get("X-Session-Token")
-		if user, found := middleware.tokenUsers[token]; found {
+			pubKey, err := ParsePublicKey()
+
+			jwt, err := JwtRSATokenValidatorHandler(token, nil)
+			if err != nil {
+				log.Printf("Forbidden for user %s\n", token)
+				FailRequest(w, r, "Forbidden", http.StatusForbidden)
+			}
+			log.Printf("%T", jwt)
 			next.ServeHTTP(w, r)
-		} else {
-			log.Printf("Forbidden for user %s\n", user)
-			http.Error(w, "Forbidden", http.StatusForbidden)
-		}
-	})
+		})
+	}
 }

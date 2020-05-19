@@ -10,11 +10,15 @@ import (
 	"os"
 
 	"github.com/gorilla/mux"
-	"gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v3"
 )
 
 type TargetHostConfig struct {
-	Targets []string `yaml:"targets"`
+	Passthrough    bool     `yaml:"passthrough"`
+	Targets        []string `yaml:"targets"`
+	ReadinessProbe string   `yaml:"readinessProbe"`
+	AllowedPaths   []string `yaml:"allowed"`
+	Paths          []string `yaml:"paths"`
 }
 
 func getProxyConfig() TargetHostConfig {
@@ -58,6 +62,11 @@ func main() {
 		log.Panic("could not set [certbot_config]")
 	}
 
+	//???
+	StartCertBot()
+
+	config := getProxyConfig()
+
 	r := mux.NewRouter()
 
 	r.Use(func(next http.Handler) http.Handler {
@@ -67,11 +76,21 @@ func main() {
 		})
 	})
 
+	r.Use(AuthenticationMiddleware(config))
+
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		json.NewEncoder(w).Encode("{ health : true }")
+		json.NewEncoder(w).Encode(`{ "health" : true }`)
 	})
 
-	config := getProxyConfig()
+	r.HandleFunc("/readiness", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("using readinessprobe: %s", config.ReadinessProbe)
+		resp, err := http.Get(config.ReadinessProbe)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	})
 
 	for _, host := range config.Targets {
 		rpURL, err := url.Parse(host)
